@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    * {
+      margin: 0px;
+      padding: 0px
+    }
+
+    ::-webkit-scrollbar {
+      height: 0px;
+      width: 0px;
+    }
+
+    body {
+      width: 100%;
+      height: 100vh;
+      background-color: black;
+    }
+  </style>
+  <title>Document</title>
+</head>
+
+<body>
+  <script>
+
+    const MATRIX = [
+      '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+      'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
+      'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T',
+      'U', 'V', 'W', 'X', 'Y', 'Z',
+      'あ', 'い', 'う', 'え', 'お', 'か', 'き', 'く', 'け', 'こ',
+      'さ', 'し', 'す', 'せ', 'そ', 'た', 'ち', 'つ', 'て', 'と',
+      'な', 'に', 'ぬ', 'ね', 'の', 'は', 'ひ', 'ふ', 'へ', 'ほ',
+      'ま', 'み', 'む', 'め', 'も', 'や', 'ゆ', 'よ',
+      'ら', 'り', 'る', 'れ', 'ろ', 'わ', 'を', 'ん',
+      'ァ', 'ィ', 'ゥ', 'ェ', 'ォ', 'ャ', 'ュ', 'ョ',
+      'ア', 'イ', 'ウ', 'エ', 'オ', 'カ', 'キ', 'ク', 'ケ', 'コ',
+      'サ', 'シ', 'ス', 'セ', 'ソ', 'タ', 'チ', 'ツ', 'テ', 'ト',
+      'ナ', 'ニ', 'ヌ', 'ネ', 'ノ', 'ハ', 'ヒ', 'フ', 'ヘ', 'ホ',
+      'マ', 'ミ', 'ム', 'メ', 'モ', 'ヤ', 'ユ', 'ヨ',
+      'ラ', 'リ', 'ル', 'レ', 'ロ', 'ワ', 'ヲ', 'ン'
+    ];
+
+    const colors = {
+      red: {
+        rgb: '255, 0, 0',
+        hex: '#ff0000'
+      },
+      green: {
+        rgb: '0, 255, 0',
+        hex: '#00ff00'
+      },
+      yellow: {
+        rgb: '255, 221, 0',
+        hex: '#ffdd00'
+      },
+      purple: {
+        rgb: '132, 3, 252',
+        hex: '#8403fc'
+      },
+      blue: {
+        rgb: '3, 231, 252',
+        hex: '#03e7fc'
+      }
+    };
+
+    let color_selected = colors['red'];
+
+    const change_color = () => {
+
+      color_selected = colors['green'];
+
+      setTimeout(() => change_color(), 5000);
+
+    }
+
+    const WIDTH = window.innerWidth - 5;
+    const HEIGHT = window.innerHeight - 5;
+    const FONT_SIZE = 16;
+    const COLUMNS_AMOUNT = Math.ceil(Math.abs(WIDTH / FONT_SIZE));
+    const canvas_element = document.createElement('canvas');
+
+    canvas_element.style.background = 'black';
+
+    canvas_element.width = WIDTH;
+    canvas_element.height = HEIGHT;
+
+    document.body.appendChild(canvas_element);
+
+    const ctx = canvas_element.getContext('2d');
+
+    window.addEventListener('keydown', (event) => {
+
+      if (event.keyCode === 82) color_selected = colors['red'];
+
+      if (event.keyCode === 71) color_selected = colors['green'];
+
+      if (event.keyCode === 89) color_selected = colors['yellow'];
+
+      if (event.keyCode === 80) color_selected = colors['purple'];
+
+      if (event.keyCode === 66) color_selected = colors['blue'];
+
+    })
+
+    class LettersByColumn {
+
+      letters_layer = [];
+      wait = false;
+      timer = 0
+      generation_position = 0;
+
+      constructor(column, timer) {
+
+        this.timer = timer;
+        this.generation_position = column * FONT_SIZE;
+
+        this.letters_layer.push({
+          char: MATRIX[Math.floor(Math.random() * MATRIX.length)],
+          opacity: 1,
+          over_created: true,
+          rate_opacity: (0.02 + Math.random() * 0.05).toFixed(2),
+          x: this.generation_position,
+          y: FONT_SIZE
+        });
+
+      }
+
+      spawn_loop() {
+
+        for (let x = 0; x < this.letters_layer.length; x++) {
+
+          const current_element = this.letters_layer[x];
+
+          current_element.opacity -= current_element.rate_opacity;
+
+          ctx.fillStyle = current_element.over_created ? '#ffffff' : `rgba(${color_selected.rgb}, ${current_element.opacity})`;
+
+          ctx.shadowColor = color_selected.hex;
+          ctx.shadowBlur = 10;
+
+          ctx.font = `bolder ${FONT_SIZE}px Arial`;
+          ctx.fillText(current_element.char, current_element.x, current_element.y, FONT_SIZE);
+
+          current_element.over_created = false;
+
+        }
+
+        if (!this.wait)
+          this.increase_loop();
+
+        this.clean_up();
+
+      }
+
+      async increase_loop() {
+
+        let next_position_on_y = FONT_SIZE + this.letters_layer[this.letters_layer.length - 1]?.y || HEIGHT + 1;
+
+        if (next_position_on_y >= (HEIGHT + FONT_SIZE)) {
+
+          this.wait = true;
+
+          await new Promise(
+            resolve => setTimeout(() =>
+              resolve(true),
+              Math.floor(Math.random() * this.timer)
+            )
+          );
+
+          this.wait = false;
+
+          next_position_on_y = FONT_SIZE;
+
+        }
+
+        this.letters_layer.push({
+          char: MATRIX[Math.floor(Math.random() * MATRIX.length)],
+          opacity: 1,
+          over_created: true,
+          rate_opacity: (0.02 + Math.random() * 0.05).toFixed(2),
+          x: this.generation_position,
+          y: next_position_on_y
+        });
+
+      }
+
+      clean_up() {
+
+        for (let z = 0; z < this.letters_layer.length; z++) {
+
+          const element = this.letters_layer[z];
+
+          if (element.opacity <= 0) {
+
+            this.letters_layer.splice(z, 1);
+
+          }
+
+        }
+
+      }
+
+    }
+
+    const letter_struct = [];
+
+    const draw_grid = async (time) => {
+
+      const initializer = [];
+
+      const init_column = async (column) => {
+
+        await new Promise(
+          resolve => setTimeout(() =>
+            resolve(true),
+            Math.floor(Math.random() * time)
+          )
+        );
+
+        letter_struct.push(new LettersByColumn(column, time));
+
+      }
+
+      Array.from({ length: COLUMNS_AMOUNT }).map((_, index) => init_column(index));
+
+    }
+
+    const event_loop = async () => {
+
+      requestAnimationFrame(event_loop);
+      ctx.clearRect(0, 0, WIDTH, HEIGHT);
+
+      for (let y = 0; y < letter_struct.length; y++)
+        letter_struct[y].spawn_loop();
+
+    }
+
+    event_loop();
+
+    draw_grid(2000);
+    draw_grid(3000);
+
+  </script>
+</body>
+
+</html>
